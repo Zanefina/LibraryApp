@@ -1,0 +1,70 @@
+﻿@model IEnumerable<LibraryApp.Models.DTO.BookDTO>
+@{
+    ViewData["Title"] = "BookIndex";
+}
+<h1>BookIndex</h1>
+<p>
+    <a asp-action="CreateBook" class="btn btn-outline-primary"><i class="fa fa-plus"></i> Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Author)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PublishedOn)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Genre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Availability)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.BookId)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.Title)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.Author)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.PublishedOn)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.Genre)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.Description)</td>
+
+                <td>@Html.DisplayFor(modelItem => item.Availability)</td>
+
+               
+                <td>
+                    <a asp-action="Details" class="btn btn-success" asp-route-id="@item.BookId">Details <i class="fa fa-edit"></i></a>
+
+                    <a asp-action="UpdateBook" class="btn btn-warning" asp-route-couponId="@item.BookId">
+                        Edit <i class="fa fa-edit"></i>
+                    </a>
+
+                    <a asp-action="DeleteBook" class="btn btn-danger" asp-route-couponId="@item.BookId">
+                        Delete <i class="fa fa-trash"></i>
+                    </a>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+
+</table>
+
+

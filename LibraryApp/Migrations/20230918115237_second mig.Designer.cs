@@ -13,7 +13,7 @@ namespace LibraryApp.Migrations
 {
     [DbContext(typeof(Context))]
     [Migration("20230918115237_second mig")]
-    partial class secondmig
+    partial class Secondmig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

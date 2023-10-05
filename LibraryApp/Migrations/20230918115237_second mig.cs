@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LibraryApp.Migrations
 {
     /// <inheritdoc />
-    public partial class secondmig : Migration
+    public partial class Secondmig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
