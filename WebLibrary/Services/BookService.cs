@@ -15,7 +15,7 @@ namespace WebLibrary.Services
             {
                 ApiType = StaticDetails.ApiType.POST,
                 Data = bookDTO,
-                Url = StaticDetails.BookApiBase + "/api/books/",
+                Url = StaticDetails.BookApiBase + "/api/books",
                 AccessToken = ""
             });
         }
@@ -35,7 +35,7 @@ namespace WebLibrary.Services
             return this.SendAsync<T>(new Models.ApiRequest()
             {
                 ApiType = StaticDetails.ApiType.GET,
-                Url = StaticDetails.BookApiBase + "/api/books/",
+                Url = StaticDetails.BookApiBase + "/api/books",
                 AccessToken = ""
             });
         }
@@ -56,7 +56,7 @@ namespace WebLibrary.Services
             {
                 ApiType = StaticDetails.ApiType.PUT,
                 Data = bookDTO,
-                Url = StaticDetails.BookApiBase + "/api/books/",
+                Url = StaticDetails.BookApiBase + "/api/books",
                 AccessToken = ""
             });
         }

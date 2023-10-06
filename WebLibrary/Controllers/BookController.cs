@@ -23,7 +23,22 @@ namespace WebLibrary.Controllers
 
             if (response != null && response.IsSuccess)
             {
-                bookList = JsonConvert.DeserializeObject<List<BookDTO>>(Convert.ToString(response.Result));
+                try
+                {
+                    bookList = JsonConvert.DeserializeObject<List<BookDTO>>(Convert.ToString(response.Result));
+                }
+                catch (Exception ex)
+                {
+                    // Handle deserialization errors, e.g., log the exception and provide user feedback
+                    ModelState.AddModelError("", "Error occurred while processing the data.");
+                    // You can also redirect to an error page or show an error message.
+                }
+            }
+            else
+            {
+                // Handle the case where the service call was not successful, e.g., show an error message.
+                ModelState.AddModelError("", "Error occurred while fetching data from the service.");
+                // You can also redirect to an error page or show an error message.
             }
 
             return View(bookList);

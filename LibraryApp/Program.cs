@@ -27,7 +27,7 @@ namespace LibraryApp
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAutoMapper(typeof(MappingConfig));
-            builder.Services.AddValidatorsFromAssemblyContaining<CreateBookDTO>();
+            builder.Services.AddValidatorsFromAssemblyContaining<BookDTO>();
 
             // Register services and database context
             builder.Services.AddScoped<IBookRepository, BookRepository>();
