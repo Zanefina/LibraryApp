@@ -17,6 +17,7 @@ namespace WebLibrary.Controllers
         }
         public async Task<IActionResult> BookIndex()
         {
+            
             List<BookDTO> bookList = new List<BookDTO>();
 
             var response = await _bookService.GetAllBooks<ResponsDto>();
@@ -29,16 +30,15 @@ namespace WebLibrary.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // Handle deserialization errors, e.g., log the exception and provide user feedback
+                    
                     ModelState.AddModelError("", "Error occurred while processing the data.");
-                    // You can also redirect to an error page or show an error message.
+                    
                 }
             }
             else
             {
-                // Handle the case where the service call was not successful, e.g., show an error message.
                 ModelState.AddModelError("", "Error occurred while fetching data from the service.");
-                // You can also redirect to an error page or show an error message.
+                
             }
 
             return View(bookList);
@@ -74,9 +74,9 @@ namespace WebLibrary.Controllers
             return View();
         }
 
-        public async Task<IActionResult> UpdateBook(int bookId)
+        public async Task<IActionResult> UpdateBook(int id)
         {
-            var response = await _bookService.GetBookById<ResponsDto>(bookId);
+            var response = await _bookService.GetBookById<ResponsDto>(id);
             if (response != null && response.IsSuccess)
             {
                 BookDTO model = JsonConvert.DeserializeObject<BookDTO>(Convert.ToString(response.Result));
@@ -100,9 +100,9 @@ namespace WebLibrary.Controllers
         }
 
 
-        public async Task<IActionResult> DeleteBook(int bookId)
+        public async Task<IActionResult> DeleteBook(int id)
         {
-            var response = await _bookService.GetBookById<ResponsDto>(bookId);
+            var response = await _bookService.GetBookById<ResponsDto>(id);
             if (response != null && response.IsSuccess)
             {
                 BookDTO model = JsonConvert.DeserializeObject<BookDTO>(Convert.ToString(response.Result));

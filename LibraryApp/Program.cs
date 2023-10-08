@@ -7,6 +7,7 @@ using LibraryApp.Models;
 using LibraryApp.Models.DTO;
 using LibraryApp.Repos;
 using LibraryApp.Validations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SendGrid.Helpers.Errors.Model;
@@ -27,7 +28,7 @@ namespace LibraryApp
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAutoMapper(typeof(MappingConfig));
-            builder.Services.AddValidatorsFromAssemblyContaining<BookDTO>();
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateBookDTO>();
 
             // Register services and database context
             builder.Services.AddScoped<IBookRepository, BookRepository>();
@@ -48,126 +49,175 @@ namespace LibraryApp
             app.UseHttpsRedirection();
 
 
-            app.MapGet("/api/books", async (IBookRepository bookRepo) =>
+            app.MapGet("/api/books/", async ([FromServices] IBookRepository _bookRepo) =>
             {
+                ApiResponse response = new ApiResponse();
+
+                response.Result = await _bookRepo.GetAllBooks();
+                response.IsSuccess = true;
+                response.StatusCode = System.Net.HttpStatusCode.OK;
+
+                return Results.Ok(response);
+            }).WithName("GetAllBooks").Produces<ApiResponse>(200);
+
+            app.MapGet("/api/books/{bookId:int}", async (int bookId,[FromServices] IBookRepository _bookRepo) =>
+            {
+                //// Creats a respons object
+                //ApiResponse response = new ApiResponse();
+                //var book = await _bookRepo.GetBookbyId(bookId);
+
+                //if (book != null)
+                //{
+                //    var bookDTO = _mapper.Map<IEnumerable<BookDTO>>(book);
+                //    response.Result = bookDTO;
+                //    response.IsSuccess = true;
+                //    response.StatusCode = System.Net.HttpStatusCode.OK;
+                //    return Results.Ok(response);
+                //}
+                //response.ErrorMessages.Add("No match was found!");
+                //return Results.NotFound(response);
+                // Creats a respons object
+                ApiResponse response = new ApiResponse();
+
+                // Add the wanted data to the respons result
+                response.Result = await _bookRepo.GetBookbyId(bookId);
+
+                // If data was not found 
+                if (response.Result == null)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.ErrorMessages.Add($"No book with Id {bookId} found!");
+                    return Results.NotFound(response);
+                }
+
+                // if data was found
+                response.IsSuccess = true;
+                response.StatusCode = System.Net.HttpStatusCode.OK;
+
+                return Results.Ok(response);
+            }).WithName("GetBookById").Produces<ApiResponse>(200);
+
+            app.MapPost("/api/books/",
+            async (
+            [FromServices] IValidator<CreateBookDTO> validator,
+            [FromServices] IMapper _mapper, 
+            [FromBody] CreateBookDTO CBookDTO,
+            [FromServices] IBookRepository _bookRepo) =>
+            {
+                ApiResponse response = new ApiResponse() { IsSuccess = false, StatusCode = System.Net.HttpStatusCode.BadRequest };
+
+                // Validates the input object depending on the rule set in the validate class
+                var validateResult = await validator.ValidateAsync(CBookDTO);
+                if (!validateResult.IsValid)
+                {
+                    foreach (var error in validateResult.Errors.ToList())
+                    {
+                        response.ErrorMessages.Add(error.ToString());
+                    }
+                    return Results.BadRequest(response);
+                }
+
+                // Maps the DTO to the real book object
+                Book book = _mapper.Map<Book>(CBookDTO);
+                book.PublishedOn = DateTime.Now;
+                book.Availability = true;
+
+                response.Result = await _bookRepo.CreateBook(book);
+
+                if (response.Result == null)
+                {
+                    response.ErrorMessages.Add($"A book with the title '{book.Title}' already exists");
+                    return Results.BadRequest(response);
+                }
+
+              
+                response.Result = _mapper.Map<BookDTO>(book);
+                response.IsSuccess = true;
+                response.StatusCode = System.Net.HttpStatusCode.Created;
+                return Results.Ok(response);
+            }).WithName("CreateBook").Accepts<CreateBookDTO>("Application/json").Produces<ApiResponse>(201).Produces(400);
+
+
+
+            app.MapDelete("/api/books/{bookId:int}", async (int bookId, [FromServices] IBookRepository _bookRepo) =>
+            {
+                //ApiResponse response = new ApiResponse() { IsSuccess = false, StatusCode = System.Net.HttpStatusCode.NotFound };
+
+                //response.Result = await _bookRepo.DeleteBook(bookId);
+                //if (response.Result == null)
+                //{
+                //    response.ErrorMessages.Add($"No book with ID {bookId} exists");
+                //    return Results.NotFound(response);
+                //}
+
+                //response.IsSuccess = true;
+                //response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                //return Results.Ok(response);
+                ApiResponse response = new() { IsSuccess = false, StatusCode = System.Net.HttpStatusCode.BadRequest };
                 try
                 {
-                    // Retrieve a collection of books from the repository
-                    var books = await bookRepo.GetAllBooks();
-
-                    // Map the repository's book objects to BookDTO objects
-                    var bookDTOs = books.Select(book => new BookDTO
+                    var bookToDelete = await _bookRepo.DeleteBook(bookId);
+                    if (bookToDelete != null)
                     {
-                        BookId = book.BookId,
-                        Title = book.Title,
-                        Author = book.Author,
-                        PublishedOn = book.PublishedOn,
-                        Genre = book.Genre,
-                        Description = book.Description,
-                        Availability = book.Availability
-                    }).ToList();
-
-                    // Return the list of BookDTO objects as the response
-                    return Results.Ok(bookDTOs);
-                }
-                catch (NotFoundException)
-                {
-                    return Results.NotFound("No books found");
-                }
-                catch (Exception)
-                {
-                    return Results.StatusCode(500);
-                }
-            }).WithName("GetAllBooks");
-            app.MapGet("api/books/{id:int}", async (IBookRepository bookRepo, int id) =>
-            {
-                var book = await bookRepo.GetBookbyId(id);
-                if (book == null)
-                {
-                    return Results.NotFound("The book that you are searching for was not found");
-                }
-                return Results.Ok(book);
-            }).WithName("GetBookByID");
-          
-            app.MapPost("/api/books", async (IBookRepository bookRepo, IMapper mapper, CreateBookDTO createBookDTO, CreateBookValidation validator) =>
-            {
-                try
-                {
-                    // Validate the input using the CreateBookValidation validator
-                    var validationResult = validator.Validate(createBookDTO);
-
-                    if (!validationResult.IsValid)
-                    {
-                        // Return a 400 Bad Request response with validation errors
-                        return Results.BadRequest(validationResult.Errors);
+                        response.IsSuccess = true;
+                        response.StatusCode = System.Net.HttpStatusCode.OK;
+                        response.Result = bookToDelete;
+                        return Results.Ok(response);
                     }
-
-                    // Use AutoMapper to map CreateBookDTO to Book
-                    var newBook = mapper.Map<Book>(createBookDTO);
-
-                    // Call the repository to create the new book
-                    var createdBook = await bookRepo.CreateBook(newBook);
-
-                    if (createdBook == null)
-                    {
-                        return Results.BadRequest("Unable to add the new book");
-                    }
-
-                    // Return a 201 Created response with the newly created book's details
-                    return Results.Created($"/api/Books/{createdBook.BookId}", createdBook);
+                    response.ErrorMessages.Add("invalid ID");
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    return Results.NotFound(response);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    return Results.StatusCode(500);
+
+                    return Results.BadRequest(e);
                 }
-            }).WithName("CreateBook").Accepts<CreateBookDTO>("application/json");
 
 
-            app.MapDelete("/api/books/{bookId}", async (int bookId, IBookRepository bookRepo) =>
-            {
-                var book = await bookRepo.DeleteBook(bookId);
-                if (book != null)
-                {
-                    return Results.Ok($"Book with Id: {book.BookId} is deleted");
-                }
-                return Results.NotFound("Unable to find the book");
             }).WithName("DeleteBook");
 
-            app.MapPut("/api/books", async (IBookRepository bookRepo, IMapper mapper, UpdateBookDTO updateBookDTO, int bookId, IValidator<UpdateBookDTO> validator) =>
+            app.MapPut("/api/books/",
+            async (
+            [FromServices] IValidator<UpdateBookDTO> validator,
+            [FromServices] IMapper _mapper,
+            [FromBody] UpdateBookDTO UBookDTO,
+            [FromServices] IBookRepository _bookRepo) =>
             {
-                try
+                ApiResponse response = new ApiResponse() { IsSuccess = false, StatusCode = System.Net.HttpStatusCode.BadRequest };
+
+                // Validates the input object depending on the rule set in the validate class
+                var validateResult = await validator.ValidateAsync(UBookDTO);
+                if (!validateResult.IsValid)
                 {
-                    // Validate the input using the UpdateBookValidation validator
-                    var validationResult = validator.Validate(updateBookDTO);
-
-                    if (!validationResult.IsValid)
+                    foreach (var error in validateResult.Errors.ToList())
                     {
-                        // Return a 400 Bad Request response with validation errors
-                        return Results.BadRequest(validationResult.Errors);
+                        response.ErrorMessages.Add(error.ToString());
                     }
-
-                    // Use AutoMapper to map UpdateBookDTO to Book
-                    var bookToUpdate = mapper.Map<Book>(updateBookDTO);
-
-                    // Set the BookId property to the provided bookId
-                    bookToUpdate.BookId = bookId;
-
-                    // Call the repository to update the book
-                    var updatedBook = await bookRepo.UpdateBook(bookToUpdate, bookId);
-
-                    if (updatedBook != null)
-                    {
-                        return Results.Ok($"Book with Id: {updatedBook.BookId} was updated");
-                    }
-
-                    return Results.NotFound("Unable to find the book");
+                    return Results.BadRequest(response);
                 }
-                catch (Exception)
+
+                Book book = _mapper.Map<Book>(UBookDTO);
+
+                // Finds the book with the id we want to change
+                response.Result = await _bookRepo.UpdateBook(book);
+
+                // if it does not exists
+                if (response.Result == null)
                 {
-                    return Results.StatusCode(500);
+                    response.ErrorMessages.Add($"No book with id {UBookDTO.BookId} exists");
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    return Results.NotFound(response);
                 }
-            }).WithName("UpdateBook").Accepts<UpdateBookDTO>("application/json");
 
+               
+                response.Result = _mapper.Map<BookDTO>(book);
+                response.IsSuccess = true;
+                response.StatusCode = System.Net.HttpStatusCode.OK;
+
+                return Results.Ok(response);
+            }).WithName("UpdateBook").Accepts<UpdateBookDTO>("Application/json").Produces<ApiResponse>(200).Produces(400);
 
 
             app.Run();

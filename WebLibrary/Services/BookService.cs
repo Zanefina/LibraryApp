@@ -20,19 +20,19 @@ namespace WebLibrary.Services
             });
         }
 
-        public async Task<T> DeleteBookAsync<T>(int bookId)
+        public async Task<T> DeleteBookAsync<T>(int id)
         {
             return await this.SendAsync<T>(new Models.ApiRequest
             {
                 ApiType = StaticDetails.ApiType.DELETE,
-                Url = StaticDetails.BookApiBase + "/api/books/" + bookId,
+                Url = StaticDetails.BookApiBase + "/api/books/" + id,
                 AccessToken = ""
             });
         }
 
-        public Task<T> GetAllBooks<T>()
+        public async Task<T> GetAllBooks<T>()
         {
-            return this.SendAsync<T>(new Models.ApiRequest()
+            return await this.SendAsync<T>(new Models.ApiRequest()
             {
                 ApiType = StaticDetails.ApiType.GET,
                 Url = StaticDetails.BookApiBase + "/api/books",

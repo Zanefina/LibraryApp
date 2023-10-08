@@ -7,7 +7,7 @@ namespace LibraryApp.Interfaces
         Task<ICollection<Book>>GetAllBooks();
         Task<Book>GetBookbyId(int bookId);
         Task<Book> CreateBook(Book toCreate);
-        Task<Book> UpdateBook(Book book, int bookId);
+        Task<Book> UpdateBook(Book book);
         Task<Book>DeleteBook(int bookId);
     }
 }

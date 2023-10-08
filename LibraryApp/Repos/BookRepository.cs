@@ -16,6 +16,7 @@ namespace LibraryApp.Repos
         public async Task<ICollection<Book>> GetAllBooks()
         {
             return await _context.Books.ToListAsync();
+
         }
 
 
@@ -39,35 +40,31 @@ namespace LibraryApp.Repos
 
         public async Task <Book> DeleteBook(int bookId)
         {
-            var book = await _context.Books
-            .FirstOrDefaultAsync(b => b.BookId == bookId);
-
-            if (book == null)
+            var result = await _context.Books.FirstOrDefaultAsync(x => x.BookId == bookId);
+            if (result != null)
             {
-                return null; // Return null when the book is not found.
+                _context.Books.Remove(result);
+                await _context.SaveChangesAsync();
+                return result;
             }
-
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
-
-            return book; // Return the deleted book.
+            return null;
         }
 
 
-        public async Task<Book> UpdateBook(Book book, int bookId)
+        public async Task<Book> UpdateBook(Book book)
         {
-            var updatedBook = await _context.Books.FirstOrDefaultAsync(b => b.BookId == bookId);
-            if (updatedBook != null)
+            var result = await _context.Books.FirstOrDefaultAsync(b => b.BookId == book.BookId);
+            if (result != null)
             {
-                updatedBook.BookId = bookId;
-                updatedBook.Title = book.Title;
-                updatedBook.Author = book.Author;
-                updatedBook.Genre = book.Genre;
-                updatedBook.PublishedOn = book.PublishedOn;
-                updatedBook.Availability = book.Availability;
+                result.Title = book.Title;
+                result.Author = book.Author;
+                result.Genre = book.Genre;
+                result.PublishedOn = book.PublishedOn;
+                result.Description = book.Description;
+                result.Availability = book.Availability;
 
                 await _context.SaveChangesAsync();
-                return updatedBook;
+                return result;
             }
             return null;
         }
