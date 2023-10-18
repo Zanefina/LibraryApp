@@ -21,6 +21,19 @@ namespace LibraryApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            //adding cors policy! 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("CORSPolicy",
+                    builder =>
+                    {
+                        builder
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .WithOrigins("http://localhost:3001");//route of local react application
+                    });
+            });
+
             // Add services to the container.
             builder.Services.AddAuthorization();
 
@@ -47,6 +60,10 @@ namespace LibraryApp
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("CORSPolicy");
+
+            app.UseAuthorization();
 
 
             app.MapGet("/api/books/", async ([FromServices] IBookRepository _bookRepo) =>
@@ -136,7 +153,7 @@ namespace LibraryApp
                 response.IsSuccess = true;
                 response.StatusCode = System.Net.HttpStatusCode.Created;
                 return Results.Ok(response);
-            }).WithName("CreateBook").Accepts<CreateBookDTO>("Application/json").Produces<ApiResponse>(201).Produces(400);
+            }).WithName("CreateBook").Accepts<CreateBookDTO>("application/json").Produces<ApiResponse>(201).Produces(400);
 
 
 
